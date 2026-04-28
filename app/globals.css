@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 33% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 224 76% 56%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 222 25% 92%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 20% 93%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 223 100% 95%;
+    --accent-foreground: 224 71% 37%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 224 76% 56%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 226 34% 8%;
+    --foreground: 210 40% 98%;
+    --card: 224 31% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 31% 12%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 221 83% 62%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 223 21% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 223 21% 16%;
+    --muted-foreground: 215 20% 70%;
+    --accent: 224 47% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 223 20% 22%;
+    --input: 223 20% 22%;
+    --ring: 221 83% 62%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: Arial, Helvetica, sans-serif;
+    background-image:
+      radial-gradient(circle at top left, hsl(223 100% 90% / 0.55), transparent 28%),
+      radial-gradient(circle at right center, hsl(210 100% 88% / 0.35), transparent 24%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+    min-height: 100vh;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at top left, hsl(224 90% 45% / 0.15), transparent 24%),
+      radial-gradient(circle at right center, hsl(205 85% 52% / 0.12), transparent 22%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply border border-white/20 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/55;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}

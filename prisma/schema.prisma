@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+  email     String     @unique
+  name      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  lists     TaskList[]
+  tasks     Task[]
+}
+
+model TaskList {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  color     String?
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  @@index([userId])
+}
+
+model Task {
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  isCompleted Boolean   @default(false)
+  isStarred   Boolean   @default(false)
+  isMyDay     Boolean   @default(false)
+  dueDate     DateTime?
+  reminderAt  DateTime?
+  completedAt DateTime?
+  listId      String    @db.Uuid
+  userId      String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  list        TaskList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subtasks    Subtask[]
+
+  @@index([userId, listId])
+  @@index([userId, isCompleted])
+  @@index([userId, isStarred])
+  @@index([userId, isMyDay])
+  @@index([userId, dueDate])
+}
+
+model Subtask {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  isCompleted Boolean  @default(false)
+  taskId      String   @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+}

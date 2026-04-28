@@ -1,0 +1,41 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+# Không đẩy các tệp môi trường thực tế chứa API Keys, Database URL lên Git
+.env*.local
+.env
+.env.development
+.env.test
+.env.production
+# Lưu ý: Cố tình KHÔNG ignore tệp .env.example (để các lập trình viên khác biết cấu trúc biến)
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
