@@ -8,21 +8,21 @@ import { serializeSubtask } from "@/lib/serializers";
 import { createSubtaskSchema } from "@/lib/validations";
 
 type Params = {
-  params: Promise<{ taskId: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export async function GET(_: NextRequest, { params }: Params) {
   try {
     const user = await requireCurrentUser();
-    const { taskId } = await params;
-    const task = await prisma.task.findFirst({ where: { id: taskId, userId: user.id } });
+    const { id } = await params;
+    const task = await prisma.task.findFirst({ where: { id, userId: user.id } });
 
     if (!task) {
       return apiError(404, "TASK_NOT_FOUND", "Không tìm thấy task.");
     }
 
     const subtasks = await prisma.subtask.findMany({
-      where: { taskId },
+      where: { taskId: id },
       orderBy: { createdAt: "asc" },
     });
 
@@ -38,8 +38,8 @@ export async function GET(_: NextRequest, { params }: Params) {
 export async function POST(request: NextRequest, { params }: Params) {
   try {
     const user = await requireCurrentUser();
-    const { taskId } = await params;
-    const task = await prisma.task.findFirst({ where: { id: taskId, userId: user.id } });
+    const { id } = await params;
+    const task = await prisma.task.findFirst({ where: { id, userId: user.id } });
 
     if (!task) {
       return apiError(404, "TASK_NOT_FOUND", "Không tìm thấy task.");
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const subtask = await prisma.subtask.create({
       data: {
         title: body.title,
-        taskId,
+        taskId: id,
       },
     });
 
