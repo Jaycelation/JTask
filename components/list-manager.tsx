@@ -3,9 +3,9 @@
 import * as React from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import type { ListSummary } from "@/lib/types";
 
 type ListManagerProps = {
@@ -113,15 +113,29 @@ export function ListManager({
       <ConfirmDialog
         open={Boolean(deleteId)}
         title="Xóa danh sách"
-        description={`Xóa "${deletableList?.name ?? ""}" và chuyển task về danh sách mặc định?`}
-        confirmLabel="Xóa"
-        destructive
+        description={`Chọn cách xử lý task trong "${deletableList?.name ?? ""}".`}
         onCancel={() => setDeleteId(null)}
-        onConfirm={() => {
-          if (!deleteId) return;
-          void onDelete(deleteId, "move-to-default");
-          setDeleteId(null);
-        }}
+        onConfirm={() => undefined}
+        actions={[
+          {
+            label: "Chuyển về mặc định",
+            variant: "secondary",
+            onClick: () => {
+              if (!deleteId) return;
+              void onDelete(deleteId, "move-to-default");
+              setDeleteId(null);
+            },
+          },
+          {
+            label: "Xóa cả task",
+            variant: "destructive",
+            onClick: () => {
+              if (!deleteId) return;
+              void onDelete(deleteId, "delete-tasks");
+              setDeleteId(null);
+            },
+          },
+        ]}
       />
     </div>
   );

@@ -4,6 +4,12 @@ import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+type ConfirmAction = {
+  label: string;
+  onClick: () => void;
+  variant?: "default" | "secondary" | "ghost" | "outline" | "destructive";
+};
+
 type ConfirmDialogProps = {
   open: boolean;
   title: string;
@@ -13,6 +19,7 @@ type ConfirmDialogProps = {
   destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  actions?: ConfirmAction[];
 };
 
 export function ConfirmDialog({
@@ -24,6 +31,7 @@ export function ConfirmDialog({
   destructive,
   onConfirm,
   onCancel,
+  actions,
 }: ConfirmDialogProps) {
   if (!open) {
     return null;
@@ -37,13 +45,21 @@ export function ConfirmDialog({
         </div>
         <h3 className="text-lg font-semibold">{title}</h3>
         <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
           <Button variant="ghost" onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button variant={destructive ? "destructive" : "default"} onClick={onConfirm}>
-            {confirmLabel}
-          </Button>
+          {actions?.length
+            ? actions.map((action) => (
+                <Button key={action.label} variant={action.variant ?? "default"} onClick={action.onClick}>
+                  {action.label}
+                </Button>
+              ))
+            : (
+                <Button variant={destructive ? "destructive" : "default"} onClick={onConfirm}>
+                  {confirmLabel}
+                </Button>
+              )}
         </div>
       </div>
     </div>
