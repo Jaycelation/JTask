@@ -3,6 +3,7 @@
 import * as React from "react";
 import { CalendarDays, Star, SunMedium, Trash2 } from "lucide-react";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DatePicker } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -73,6 +74,7 @@ export function TaskDetailPanel({
   const [draftTitle, setDraftTitle] = React.useState("");
   const [draftDescription, setDraftDescription] = React.useState("");
   const [subtaskTitle, setSubtaskTitle] = React.useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   React.useEffect(() => {
     setDraftTitle(task?.title ?? "");
@@ -90,141 +92,156 @@ export function TaskDetailPanel({
   }
 
   return (
-    <aside className="glass fixed inset-x-4 bottom-4 top-24 z-30 overflow-auto rounded-[2rem] p-5 lg:static lg:inset-auto lg:block lg:h-[calc(100vh-2rem)] lg:w-[380px] xl:w-[400px]">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Chi tiết task</h2>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Đóng
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Spinner className="h-5 w-5" />
-        </div>
-      ) : (
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                checked={task.isCompleted}
-                onCheckedChange={(checked) => void onUpdateTask(task.id, { isCompleted: checked })}
-                className="mt-1"
-              />
-              <Input
-                value={draftTitle}
-                onChange={(event) => setDraftTitle(event.target.value)}
-                onBlur={() => {
-                  if (draftTitle.trim() && draftTitle.trim() !== task.title) {
-                    void onUpdateTask(task.id, { title: draftTitle.trim() });
-                  }
-                }}
-                className="border-none bg-transparent px-0 text-lg font-semibold focus-visible:ring-0"
-              />
-            </div>
-
-            <Textarea
-              value={draftDescription}
-              onChange={(event) => setDraftDescription(event.target.value)}
-              onBlur={() => {
-                if (draftDescription !== (task.description ?? "")) {
-                  void onUpdateTask(task.id, { description: draftDescription || null });
-                }
-              }}
-              placeholder="Thêm ghi chú cho task"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant={task.isStarred ? "default" : "secondary"}
-              onClick={() => void onUpdateTask(task.id, { isStarred: !task.isStarred })}
-            >
-              <Star className={cn("h-4 w-4", task.isStarred && "fill-current")} />
-              Quan trọng
-            </Button>
-            <Button
-              variant={task.isMyDay ? "default" : "secondary"}
-              onClick={() => void onUpdateTask(task.id, { isMyDay: !task.isMyDay })}
-            >
-              <SunMedium className="h-4 w-4" />
-              My Day
-            </Button>
-          </div>
-
-          <DatePicker
-            label="Ngày đến hạn"
-            value={task.dueDate}
-            onChange={(value) => void onUpdateTask(task.id, { dueDate: value })}
-          />
-
-          <DatePicker
-            label="Nhắc nhở"
-            value={task.reminderAt}
-            onChange={(value) => void onUpdateTask(task.id, { reminderAt: value })}
-          />
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Danh sách</label>
-            <select
-              className="flex h-10 w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm"
-              value={task.listId}
-              onChange={(event) => void onUpdateTask(task.id, { listId: event.target.value })}
-            >
-              {lists.map((list) => (
-                <option key={list.id} value={list.id}>
-                  {list.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold">Subtasks</h3>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                value={subtaskTitle}
-                onChange={(event) => setSubtaskTitle(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && subtaskTitle.trim()) {
-                    void onCreateSubtask(task.id, subtaskTitle.trim());
-                    setSubtaskTitle("");
-                  }
-                }}
-                placeholder="Thêm subtask"
-              />
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  if (!subtaskTitle.trim()) return;
-                  void onCreateSubtask(task.id, subtaskTitle.trim());
-                  setSubtaskTitle("");
-                }}
-              >
-                Thêm
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {task.subtasks?.map((subtask) => (
-                <SubtaskRow
-                  key={subtask.id}
-                  subtask={subtask}
-                  onUpdate={(payload) => onUpdateSubtask(subtask.id, payload)}
-                  onDelete={() => onDeleteSubtask(subtask.id)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <Button variant="destructive" className="w-full" onClick={() => void onDeleteTask(task.id)}>
-            <Trash2 className="h-4 w-4" />
-            Xóa task
+    <>
+      <aside className="glass fixed inset-x-4 bottom-4 top-24 z-30 overflow-auto rounded-[2rem] p-5 lg:static lg:inset-auto lg:block lg:h-[calc(100vh-2rem)] lg:w-[380px] xl:w-[400px]">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Chi tiết task</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Đóng
           </Button>
         </div>
-      )}
-    </aside>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Spinner className="h-5 w-5" />
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  checked={task.isCompleted}
+                  onCheckedChange={(checked) => void onUpdateTask(task.id, { isCompleted: checked })}
+                  className="mt-1"
+                />
+                <Input
+                  value={draftTitle}
+                  onChange={(event) => setDraftTitle(event.target.value)}
+                  onBlur={() => {
+                    if (draftTitle.trim() && draftTitle.trim() !== task.title) {
+                      void onUpdateTask(task.id, { title: draftTitle.trim() });
+                    }
+                  }}
+                  className="border-none bg-transparent px-0 text-lg font-semibold focus-visible:ring-0"
+                />
+              </div>
+
+              <Textarea
+                value={draftDescription}
+                onChange={(event) => setDraftDescription(event.target.value)}
+                onBlur={() => {
+                  if (draftDescription !== (task.description ?? "")) {
+                    void onUpdateTask(task.id, { description: draftDescription || null });
+                  }
+                }}
+                placeholder="Thêm ghi chú cho task"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant={task.isStarred ? "default" : "secondary"}
+                onClick={() => void onUpdateTask(task.id, { isStarred: !task.isStarred })}
+              >
+                <Star className={cn("h-4 w-4", task.isStarred && "fill-current")} />
+                Quan trọng
+              </Button>
+              <Button
+                variant={task.isMyDay ? "default" : "secondary"}
+                onClick={() => void onUpdateTask(task.id, { isMyDay: !task.isMyDay })}
+              >
+                <SunMedium className="h-4 w-4" />
+                My Day
+              </Button>
+            </div>
+
+            <DatePicker
+              label="Ngày đến hạn"
+              value={task.dueDate}
+              onChange={(value) => void onUpdateTask(task.id, { dueDate: value })}
+            />
+
+            <DatePicker
+              label="Nhắc nhở"
+              value={task.reminderAt}
+              onChange={(value) => void onUpdateTask(task.id, { reminderAt: value })}
+            />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Danh sách</label>
+              <select
+                className="flex h-10 w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm"
+                value={task.listId}
+                onChange={(event) => void onUpdateTask(task.id, { listId: event.target.value })}
+              >
+                {lists.map((list) => (
+                  <option key={list.id} value={list.id}>
+                    {list.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold">Subtasks</h3>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={subtaskTitle}
+                  onChange={(event) => setSubtaskTitle(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && subtaskTitle.trim()) {
+                      void onCreateSubtask(task.id, subtaskTitle.trim());
+                      setSubtaskTitle("");
+                    }
+                  }}
+                  placeholder="Thêm subtask"
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    if (!subtaskTitle.trim()) return;
+                    void onCreateSubtask(task.id, subtaskTitle.trim());
+                    setSubtaskTitle("");
+                  }}
+                >
+                  Thêm
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {task.subtasks?.map((subtask) => (
+                  <SubtaskRow
+                    key={subtask.id}
+                    subtask={subtask}
+                    onUpdate={(payload) => onUpdateSubtask(subtask.id, payload)}
+                    onDelete={() => onDeleteSubtask(subtask.id)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <Button variant="destructive" className="w-full" onClick={() => setShowDeleteConfirm(true)}>
+              <Trash2 className="h-4 w-4" />
+              Xóa task
+            </Button>
+          </div>
+        )}
+      </aside>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Xóa task"
+        description={`Task "${task.title}" sẽ bị xóa vĩnh viễn cùng các subtask của nó.`}
+        confirmLabel="Xóa task"
+        destructive
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          void onDeleteTask(task.id);
+        }}
+      />
+    </>
   );
 }

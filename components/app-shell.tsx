@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { Search, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import type { Route } from "next";
 import { toast } from "sonner";
 
 import { AddTaskInput } from "@/components/add-task-input";
@@ -12,6 +14,8 @@ import { SmartListHeader } from "@/components/smart-list-header";
 import { SuggestionsPanel } from "@/components/suggestions-panel";
 import { TaskDetailPanel } from "@/components/task-detail-panel";
 import { TaskListView } from "@/components/task-list-view";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import type { ApiResponse, ListSummary, SuggestionDto, TaskDto } from "@/lib/types";
 import type { FocusView } from "@/lib/view-config";
@@ -44,6 +48,7 @@ export function AppShell({ view }: AppShellProps) {
   const pathname = usePathname();
   const meta = getViewMeta(view);
   const query = getViewQuery(view);
+  const [isRouting, startTransition] = React.useTransition();
 
   const [lists, setLists] = React.useState<ListSummary[]>([]);
   const [tasks, setTasks] = React.useState<TaskDto[]>([]);
@@ -52,6 +57,8 @@ export function AppShell({ view }: AppShellProps) {
   const [loading, setLoading] = React.useState(true);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const deferredSearch = React.useDeferredValue(search);
 
   const loadLists = React.useCallback(async () => {
     const data = await apiFetch<ListSummary[]>("/api/lists");
@@ -62,6 +69,7 @@ export function AppShell({ view }: AppShellProps) {
     const params = new URLSearchParams();
     if (query.filter) params.set("filter", query.filter);
     if (query.listId) params.set("listId", query.listId);
+    if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
     if (query.filter === "planned") {
       params.set("sort", "dueDate");
       params.set("order", "asc");
@@ -79,7 +87,7 @@ export function AppShell({ view }: AppShellProps) {
       const next = data.find((task) => task.id === current.id);
       return next ?? null;
     });
-  }, [query.filter, query.listId]);
+  }, [deferredSearch, query.filter, query.listId]);
 
   const loadSuggestions = React.useCallback(async () => {
     if (view.type !== "smart" || view.key !== "my-day") {
@@ -150,14 +158,13 @@ export function AppShell({ view }: AppShellProps) {
         payload.dueDate = new Date().toISOString();
       }
 
-      const created = await apiFetch<TaskDto>("/api/tasks", {
+      await apiFetch<TaskDto>("/api/tasks", {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
-      setTasks((current) => [created, ...current]);
       toast.success("Đã tạo task.");
-      await loadLists();
+      await Promise.all([loadLists(), loadTasks(), loadSuggestions()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể tạo task.");
     } finally {
@@ -170,7 +177,7 @@ export function AppShell({ view }: AppShellProps) {
     const previousSelected = selectedTask;
 
     setTasks((current) =>
-      current.map((task) => (task.id === taskId ? { ...task, ...payload } as TaskDto : task)),
+      current.map((task) => (task.id === taskId ? ({ ...task, ...payload } as TaskDto) : task)),
     );
     setSelectedTask((current) => (current?.id === taskId ? ({ ...current, ...payload } as TaskDto) : current));
 
@@ -192,10 +199,9 @@ export function AppShell({ view }: AppShellProps) {
   async function handleDeleteTask(taskId: string) {
     try {
       await apiFetch<null>(`/api/tasks/${taskId}`, { method: "DELETE" });
-      setTasks((current) => current.filter((task) => task.id !== taskId));
       setSelectedTask((current) => (current?.id === taskId ? null : current));
       toast.success("Đã xóa task.");
-      await Promise.all([loadLists(), loadSuggestions()]);
+      await Promise.all([loadLists(), loadTasks(), loadSuggestions()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể xóa task.");
     }
@@ -232,7 +238,9 @@ export function AppShell({ view }: AppShellProps) {
       await apiFetch<null>(`/api/lists/${id}?mode=${mode}`, { method: "DELETE" });
       toast.success("Đã xóa danh sách.");
       if (view.type === "list" && view.listId === id) {
-        router.push("/all");
+        startTransition(() => {
+          router.push("/all");
+        });
       }
       await Promise.all([loadLists(), loadTasks()]);
     } catch (error) {
@@ -279,14 +287,48 @@ export function AppShell({ view }: AppShellProps) {
     }
   }
 
+  function navigateToList(id: string) {
+    startTransition(() => {
+      router.push(`/lists/${id}` as Route);
+    });
+  }
+
+  const emptyTitle = deferredSearch.trim() ? "Không tìm thấy task phù hợp." : meta.emptyTitle;
+  const emptyDescription = deferredSearch.trim()
+    ? `Không có kết quả cho "${deferredSearch.trim()}". Hãy thử từ khóa khác.`
+    : meta.emptyDescription;
+
   const content = (
     <>
       <SmartListHeader
         title={headerTitle}
-        subtitle={view.type === "list" ? meta.subtitle : meta.subtitle}
+        subtitle={meta.subtitle}
         viewKey={view.type === "list" ? "list" : meta.viewKey}
         count={tasks.length}
       />
+
+      <div className="glass flex flex-col gap-3 rounded-[2rem] p-4 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Tìm theo tiêu đề hoặc ghi chú"
+            className="pl-9 pr-10"
+          />
+          {search ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+              onClick={() => setSearch("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          ) : null}
+        </div>
+        {(loading || isRouting) ? <Spinner className="h-4 w-4 text-muted-foreground" /> : null}
+      </div>
 
       {view.type === "smart" && view.key === "my-day" ? (
         <SuggestionsPanel
@@ -310,12 +352,13 @@ export function AppShell({ view }: AppShellProps) {
           tasks={tasks}
           selectedTaskId={selectedTask?.id}
           groupByPlanned={view.type === "smart" && view.key === "planned"}
+          completedOnly={view.type === "smart" && view.key === "completed"}
           onToggleComplete={(task) => void patchTask(task.id, { isCompleted: !task.isCompleted })}
           onToggleStar={(task) => void patchTask(task.id, { isStarred: !task.isStarred })}
           onSelect={(task) => void handleSelectTask(task)}
         />
       ) : (
-        <EmptyState title={meta.emptyTitle} description={meta.emptyDescription} />
+        <EmptyState title={emptyTitle} description={emptyDescription} />
       )}
     </>
   );
@@ -331,7 +374,7 @@ export function AppShell({ view }: AppShellProps) {
           onCreateList={createList}
           onUpdateList={updateList}
           onDeleteList={deleteList}
-          onSelectList={(id) => router.push(`/lists/${id}`)}
+          onSelectList={navigateToList}
         />
 
         <div className="min-w-0 flex-1 space-y-4">
@@ -343,9 +386,7 @@ export function AppShell({ view }: AppShellProps) {
             onCreateList={createList}
             onUpdateList={updateList}
             onDeleteList={deleteList}
-            onSelectList={(id) => {
-              router.push(`/lists/${id}`);
-            }}
+            onSelectList={navigateToList}
           />
           {content}
         </div>
