@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
@@ -82,10 +81,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof ZodError) {
       return apiError(400, "VALIDATION_ERROR", error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
-    }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return apiError(400, "TASK_CREATE_FAILED", "Không thể tạo task với dữ liệu hiện tại.");
     }
 
     return apiError(500, "TASK_CREATE_FAILED", "Không thể tạo task.");

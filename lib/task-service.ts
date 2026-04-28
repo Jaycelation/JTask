@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 
 import { DEFAULT_LIST_NAME } from "@/lib/constants";
@@ -50,9 +49,9 @@ export function buildTaskWhere(input: {
   const todayStart = startOfDay(now);
   const todayEnd = endOfDay(now);
 
-  const and: Prisma.TaskWhereInput[] = [];
+  const and: NonNullable<NonNullable<Parameters<typeof prisma.task.findMany>[0]>["where"]>[] = [];
 
-  const where: Prisma.TaskWhereInput = {
+  const where: NonNullable<Parameters<typeof prisma.task.findMany>[0]>["where"] = {
     userId: input.userId,
   };
 
@@ -112,7 +111,9 @@ export function buildTaskOrderBy(sort?: "createdAt" | "dueDate" | "updatedAt" | 
     return [{ isCompleted: "asc" as const }, { updatedAt: "desc" as const }];
   }
 
-  return [{ [sort]: order ?? "desc" } as Prisma.TaskOrderByWithRelationInput];
+  return [{ [sort]: order ?? "desc" }] as NonNullable<
+    NonNullable<Parameters<typeof prisma.task.findMany>[0]>["orderBy"]
+  >;
 }
 
 export async function getTaskSuggestions(userId: string) {
@@ -136,7 +137,7 @@ export async function getTaskSuggestions(userId: string) {
     take: 8,
   });
 
-  return tasks.map((task) => ({
+  return tasks.map((task: { id: string; title: string; dueDate: Date | null; listId: string; isStarred: boolean; updatedAt: Date }) => ({
     id: task.id,
     title: task.title,
     dueDate: task.dueDate,

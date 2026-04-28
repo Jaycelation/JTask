@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const objectIdSchema = z
+  .string()
+  .regex(/^[a-f\d]{24}$/i, "ID không hợp lệ.");
+
 export const taskFilterSchema = z.enum(["myday", "important", "planned", "completed", "all"]).optional();
 export const sortSchema = z.enum(["createdAt", "dueDate", "updatedAt", "completedAt"]).optional();
 export const orderSchema = z.enum(["asc", "desc"]).optional();
@@ -12,7 +16,7 @@ const optionalDate = z
 
 export const taskQuerySchema = z.object({
   filter: taskFilterSchema,
-  listId: z.string().uuid().optional(),
+  listId: objectIdSchema.optional(),
   search: z.string().trim().optional(),
   status: statusSchema,
   sort: sortSchema,
@@ -22,7 +26,7 @@ export const taskQuerySchema = z.object({
 export const createTaskSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề task là bắt buộc."),
   description: z.string().trim().optional().nullable(),
-  listId: z.string().uuid().optional(),
+  listId: objectIdSchema.optional(),
   isMyDay: z.boolean().optional(),
   isStarred: z.boolean().optional(),
   dueDate: optionalDate,
@@ -38,7 +42,7 @@ export const updateTaskSchema = z
     isMyDay: z.boolean().optional(),
     dueDate: optionalDate,
     reminderAt: optionalDate,
-    listId: z.string().uuid().optional(),
+    listId: objectIdSchema.optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Ít nhất một trường cần được cập nhật.",

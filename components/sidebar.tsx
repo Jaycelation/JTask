@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { CalendarRange, CheckCheck, ListTodo, Star, SunMedium } from "lucide-react";
 
 import { ListManager } from "@/components/list-manager";
@@ -8,7 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import type { ListSummary } from "@/lib/types";
 
-const entries = [
+const entries: Array<{ href: Route; label: string; icon: typeof SunMedium }> = [
   { href: "/my-day", label: "My Day", icon: SunMedium },
   { href: "/important", label: "Important", icon: Star },
   { href: "/planned", label: "Planned", icon: CalendarRange },

@@ -66,19 +66,29 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const mode = deleteListModeSchema.parse(request.nextUrl.searchParams.get("mode") ?? "move-to-default");
 
     if (mode === "delete-tasks") {
+      const tasks = await prisma.task.findMany({
+        where: { userId, listId: id },
+        select: { id: true },
+      });
+
+      if (tasks.length > 0) {
+        await prisma.subtask.deleteMany({
+          where: { taskId: { in: tasks.map((task: { id: string }) => task.id) } },
+        });
+      }
+
+      await prisma.task.deleteMany({ where: { userId, listId: id } });
       await prisma.taskList.delete({ where: { id } });
       return apiSuccess(null, { message: "List deleted successfully" });
     }
 
     const defaultList = await ensureUserWithDefaultList(userId);
 
-    await prisma.$transaction([
-      prisma.task.updateMany({
-        where: { userId, listId: id },
-        data: { listId: defaultList.id },
-      }),
-      prisma.taskList.delete({ where: { id } }),
-    ]);
+    await prisma.task.updateMany({
+      where: { userId, listId: id },
+      data: { listId: defaultList.id },
+    });
+    await prisma.taskList.delete({ where: { id } });
 
     return apiSuccess(null, { message: "List deleted successfully" });
   } catch (error) {

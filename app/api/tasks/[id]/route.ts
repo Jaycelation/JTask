@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
@@ -91,10 +90,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return apiError(400, "VALIDATION_ERROR", error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return apiError(400, "TASK_UPDATE_FAILED", "Không thể cập nhật task.");
-    }
-
     return apiError(500, "TASK_UPDATE_FAILED", "Không thể cập nhật task.");
   }
 }
@@ -109,6 +104,7 @@ export async function DELETE(_: NextRequest, { params }: Params) {
       return apiError(404, "TASK_NOT_FOUND", "Không tìm thấy task.");
     }
 
+    await prisma.subtask.deleteMany({ where: { taskId: id } });
     await prisma.task.delete({ where: { id } });
     return apiSuccess(null, { message: "Task deleted successfully" });
   } catch {
