@@ -36,22 +36,22 @@ export function formatDateLabel(value?: string | Date | null) {
 
 export function getPlannedGroupLabel(value?: string | Date | null) {
   if (!value) {
-    return "Later";
+    return "Sau đó";
   }
 
   const date = typeof value === "string" ? new Date(value) : value;
 
   if (isPast(endOfDay(date)) && !isToday(date)) {
-    return "Overdue";
+    return "Quá hạn";
   }
 
   if (isToday(date)) {
-    return "Today";
+    return "Hôm nay";
   }
 
   if (isTomorrow(date)) {
-    return "Tomorrow";
+    return "Ngày mai";
   }
 
-  return "Later";
+  return "Sau đó";
 }

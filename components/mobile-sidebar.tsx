@@ -27,7 +27,7 @@ export function MobileSidebar({ title, ...props }: MobileSidebarProps) {
       {open ? (
         <div className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm lg:hidden">
         <div className="h-full w-[90vw] max-w-sm p-4">
-            <Sidebar {...props} className="flex h-full w-full flex-col" />
+          <Sidebar {...props} className="flex h-full w-full flex-col" onNavigate={() => setOpen(false)} />
           </div>
           <button type="button" className="absolute inset-0 -z-10" onClick={() => setOpen(false)} />
         </div>

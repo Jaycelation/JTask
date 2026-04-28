@@ -45,7 +45,7 @@ export function getViewMeta(view: FocusView) {
       };
     case "important":
       return {
-        title: "Important",
+        title: "Quan trọng",
         subtitle: "Những task cần ưu tiên xử lý trước.",
         viewKey: view.key,
         emptyTitle: "Không có task quan trọng nào.",
@@ -53,15 +53,15 @@ export function getViewMeta(view: FocusView) {
       };
     case "planned":
       return {
-        title: "Planned",
+        title: "Đã lên kế hoạch",
         subtitle: "Theo dõi các task đã có lịch và hạn chót.",
         viewKey: view.key,
         emptyTitle: "Chưa có task nào được lên kế hoạch.",
-        emptyDescription: "Hãy đặt due date để task xuất hiện ở đây.",
+        emptyDescription: "Hãy đặt hạn cho task để nó xuất hiện ở đây.",
       };
     case "completed":
       return {
-        title: "Completed",
+        title: "Đã hoàn thành",
         subtitle: "Nhìn lại các việc bạn đã hoàn thành.",
         viewKey: view.key,
         emptyTitle: "Bạn chưa hoàn thành task nào.",
@@ -70,7 +70,7 @@ export function getViewMeta(view: FocusView) {
     case "all":
     default:
       return {
-        title: "All Tasks",
+        title: "Tất cả task",
         subtitle: "Toàn bộ công việc của bạn ở một nơi.",
         viewKey: view.key,
         emptyTitle: "Chưa có task nào.",

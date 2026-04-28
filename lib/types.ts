@@ -77,3 +77,9 @@ export type DashboardSummaryDto = {
   };
   hasAnyTasks: boolean;
 };
+
+export type DemoSeedResult = {
+  createdLists: number;
+  createdTasks: number;
+  createdSubtasks: number;
+};

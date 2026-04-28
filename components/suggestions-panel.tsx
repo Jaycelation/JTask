@@ -23,8 +23,8 @@ export function SuggestionsPanel({ suggestions, onAddToMyDay }: SuggestionsPanel
           <Lightbulb className="h-4 w-4" />
         </div>
         <div>
-          <h2 className="font-semibold">Suggestions</h2>
-          <p className="text-sm text-muted-foreground">Các task đáng để đưa vào My Day.</p>
+          <h2 className="font-semibold">Gợi ý cho My Day</h2>
+          <p className="text-sm text-muted-foreground">Các task đáng để đưa vào kế hoạch hôm nay.</p>
         </div>
       </div>
 
@@ -41,7 +41,7 @@ export function SuggestionsPanel({ suggestions, onAddToMyDay }: SuggestionsPanel
               </div>
               <Button size="sm" variant="secondary" onClick={() => onAddToMyDay(item.id)}>
                 <Plus className="h-4 w-4" />
-                My Day
+                Thêm
               </Button>
             </div>
           </div>

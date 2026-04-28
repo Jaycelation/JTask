@@ -3,9 +3,9 @@
 import { CalendarDays, ChevronRight, Star } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import type { TaskDto } from "@/lib/types";
 import { formatDateLabel } from "@/lib/date";
+import type { TaskDto } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type TaskItemProps = {
   task: TaskDto;
@@ -30,12 +30,7 @@ export function TaskItem({ task, selected, onToggleComplete, onToggleStar, onSel
         className="shrink-0"
       />
       <div className="min-w-0 flex-1">
-        <div
-          className={cn(
-            "truncate font-medium",
-            task.isCompleted && "text-muted-foreground line-through",
-          )}
-        >
+        <div className={cn("truncate font-medium", task.isCompleted && "text-muted-foreground line-through")}>
           {task.title}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -46,7 +41,7 @@ export function TaskItem({ task, selected, onToggleComplete, onToggleStar, onSel
               {formatDateLabel(task.dueDate)}
             </span>
           ) : null}
-          {task._count?.subtasks ? <span>{task._count.subtasks} subtask</span> : null}
+          {task._count?.subtasks ? <span>{task._count.subtasks} công việc con</span> : null}
         </div>
       </div>
       <button

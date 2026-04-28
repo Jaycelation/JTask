@@ -85,7 +85,7 @@ export function TaskListView({
               onClick={() => setShowCompleted((current) => !current)}
             >
               <ChevronDown className={`h-4 w-4 transition-transform ${showCompleted ? "" : "-rotate-90"}`} />
-              Completed ({completedTasks.length})
+              Đã hoàn thành ({completedTasks.length})
             </Button>
             {showCompleted ? (
               <TaskCollection
@@ -111,7 +111,7 @@ export function TaskListView({
 
   return (
     <div className="space-y-6">
-      {["Overdue", "Today", "Tomorrow", "Later"].map((group) =>
+      {["Quá hạn", "Hôm nay", "Ngày mai", "Sau đó"].map((group) =>
         groups[group]?.length ? (
           <section key={group}>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -136,7 +136,7 @@ export function TaskListView({
             onClick={() => setShowCompleted((current) => !current)}
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${showCompleted ? "" : "-rotate-90"}`} />
-            Completed ({completedTasks.length})
+            Đã hoàn thành ({completedTasks.length})
           </Button>
           {showCompleted ? (
             <TaskCollection

@@ -28,6 +28,7 @@ type SidebarProps = {
   summary: DashboardSummaryDto | null;
   activeListId?: string | null;
   className?: string;
+  onNavigate?: () => void;
   onCreateList: (payload: { name: string; color?: string | null }) => Promise<void>;
   onUpdateList: (id: string, payload: { name?: string; color?: string | null }) => Promise<void>;
   onDeleteList: (id: string, mode: "move-to-default" | "delete-tasks") => Promise<void>;
@@ -59,6 +60,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
             <Link
               key={entry.href}
               href={entry.href}
+              onClick={props.onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
                 active ? "bg-primary text-primary-foreground shadow-lg" : "hover:bg-accent",
@@ -91,7 +93,10 @@ export function Sidebar({ className, ...props }: SidebarProps) {
           onCreate={props.onCreateList}
           onUpdate={props.onUpdateList}
           onDelete={props.onDeleteList}
-          onSelect={props.onSelectList}
+          onSelect={(id) => {
+            props.onSelectList(id);
+            props.onNavigate?.();
+          }}
         />
       </div>
     </aside>
