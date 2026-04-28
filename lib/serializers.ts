@@ -1,4 +1,4 @@
-import type { ListSummary, SubtaskDto, SuggestionDto, TaskDto } from "@/lib/types";
+import type { ListSummary, RecurrenceDay, RecurrencePattern, SubtaskDto, SuggestionDto, TaskDto } from "@/lib/types";
 
 type ListRecord = {
   id: string;
@@ -27,6 +27,10 @@ type TaskRecord = {
   dueDate: Date | null;
   reminderAt: Date | null;
   completedAt: Date | null;
+  recurrencePattern: RecurrencePattern;
+  recurrenceInterval: number;
+  recurrenceDays: RecurrenceDay[];
+  recurringSourceId: string | null;
   listId: string;
   userId: string;
   createdAt: Date;
@@ -68,6 +72,10 @@ export function serializeTask(task: TaskRecord): TaskDto {
     dueDate: task.dueDate?.toISOString() ?? null,
     reminderAt: task.reminderAt?.toISOString() ?? null,
     completedAt: task.completedAt?.toISOString() ?? null,
+    recurrencePattern: task.recurrencePattern,
+    recurrenceInterval: task.recurrenceInterval,
+    recurrenceDays: task.recurrenceDays,
+    recurringSourceId: task.recurringSourceId,
     listId: task.listId,
     userId: task.userId,
     createdAt: task.createdAt.toISOString(),

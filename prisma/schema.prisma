@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RecurrencePattern {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  WEEKDAYS
+}
+
 model User {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
   email     String     @unique
@@ -40,6 +48,10 @@ model Task {
   dueDate     DateTime?
   reminderAt  DateTime?
   completedAt DateTime?
+  recurrencePattern  RecurrencePattern @default(NONE)
+  recurrenceInterval Int               @default(1)
+  recurrenceDays     String[]
+  recurringSourceId  String?           @db.ObjectId
   listId      String    @db.ObjectId
   userId      String    @db.ObjectId
   createdAt   DateTime  @default(now())

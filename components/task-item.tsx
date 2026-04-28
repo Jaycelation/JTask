@@ -1,9 +1,9 @@
 "use client";
 
-import { Bell, CalendarDays, ChevronRight, Star } from "lucide-react";
+import { Bell, CalendarDays, ChevronRight, RotateCw, Star } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatDateLabel, formatReminderLabel } from "@/lib/date";
+import { formatDateLabel, formatRecurrenceLabel, formatReminderLabel } from "@/lib/date";
 import type { TaskDto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +69,12 @@ export function TaskItem({
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-primary">
               <Bell className="h-3 w-3" />
               {formatReminderLabel(task.reminderAt)}
+            </span>
+          ) : null}
+          {task.recurrencePattern !== "NONE" ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-emerald-600 dark:text-emerald-300">
+              <RotateCw className="h-3 w-3" />
+              {formatRecurrenceLabel(task.recurrencePattern, task.recurrenceInterval)}
             </span>
           ) : null}
           {task._count?.subtasks ? <span>{task._count.subtasks} công việc con</span> : null}

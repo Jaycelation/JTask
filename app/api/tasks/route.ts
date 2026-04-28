@@ -66,6 +66,9 @@ export async function POST(request: NextRequest) {
         isStarred: body.isStarred ?? false,
         dueDate: body.dueDate ?? null,
         reminderAt: body.reminderAt ?? null,
+        recurrencePattern: body.recurrencePattern ?? "NONE",
+        recurrenceInterval: body.recurrenceInterval ?? 1,
+        recurrenceDays: body.recurrenceDays ?? [],
       },
       include: {
         list: {

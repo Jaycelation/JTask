@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { apiError, apiSuccess } from "@/lib/api";
 import { requireCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buildNextRecurringTaskData } from "@/lib/recurrence";
 import { serializeTask } from "@/lib/serializers";
 import { updateTaskSchema } from "@/lib/validations";
 
@@ -54,8 +55,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const json = await request.json();
     const body = updateTaskSchema.parse(json);
 
-    const isCompleted =
-      typeof body.isCompleted === "boolean" ? body.isCompleted : existing.isCompleted;
+    const isCompleted = typeof body.isCompleted === "boolean" ? body.isCompleted : existing.isCompleted;
+    const wasJustCompleted = existing.isCompleted === false && isCompleted === true;
 
     const task = await prisma.task.update({
       where: { id },
@@ -67,6 +68,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         ...(body.dueDate !== undefined ? { dueDate: body.dueDate } : {}),
         ...(body.reminderAt !== undefined ? { reminderAt: body.reminderAt } : {}),
         ...(body.listId !== undefined ? { listId: body.listId } : {}),
+        ...(body.recurrencePattern !== undefined ? { recurrencePattern: body.recurrencePattern } : {}),
+        ...(body.recurrenceInterval !== undefined ? { recurrenceInterval: body.recurrenceInterval } : {}),
+        ...(body.recurrenceDays !== undefined ? { recurrenceDays: body.recurrenceDays } : {}),
         ...(body.isCompleted !== undefined
           ? {
               isCompleted,
@@ -86,6 +90,21 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         },
       },
     });
+
+    const nextRecurringTask = buildNextRecurringTaskData({
+      ...existing,
+      dueDate: body.dueDate !== undefined ? body.dueDate : existing.dueDate,
+      reminderAt: body.reminderAt !== undefined ? body.reminderAt : existing.reminderAt,
+      recurrencePattern: body.recurrencePattern ?? existing.recurrencePattern,
+      recurrenceInterval: body.recurrenceInterval ?? existing.recurrenceInterval,
+      recurrenceDays: body.recurrenceDays ?? existing.recurrenceDays,
+    });
+
+    if (wasJustCompleted && nextRecurringTask) {
+      await prisma.task.create({
+        data: nextRecurringTask,
+      });
+    }
 
     return apiSuccess(serializeTask(task), { message: "Cập nhật task thành công." });
   } catch (error) {

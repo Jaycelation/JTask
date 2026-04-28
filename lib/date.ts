@@ -11,6 +11,7 @@ import {
   startOfDay,
 } from "date-fns";
 import { vi } from "date-fns/locale";
+import type { RecurrencePattern } from "@/lib/types";
 
 export function getTodayBounds() {
   const now = new Date();
@@ -94,4 +95,19 @@ export function getReminderPresets() {
       value: setMinutes(setHours(addDays(new Date(now), 1), 9), 0).toISOString(),
     },
   ];
+}
+
+export function formatRecurrenceLabel(pattern: RecurrencePattern, interval = 1) {
+  switch (pattern) {
+    case "DAILY":
+      return interval === 1 ? "Lặp mỗi ngày" : `Lặp mỗi ${interval} ngày`;
+    case "WEEKLY":
+      return interval === 1 ? "Lặp mỗi tuần" : `Lặp mỗi ${interval} tuần`;
+    case "MONTHLY":
+      return interval === 1 ? "Lặp mỗi tháng" : `Lặp mỗi ${interval} tháng`;
+    case "WEEKDAYS":
+      return "Lặp các ngày trong tuần";
+    default:
+      return "Không lặp";
+  }
 }

@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-const objectIdSchema = z
-  .string()
-  .regex(/^[a-f\d]{24}$/i, "ID không hợp lệ.");
+const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "ID không hợp lệ.");
 
 export const taskFilterSchema = z.enum(["myday", "important", "planned", "completed", "all"]).optional();
 export const sortSchema = z.enum(["createdAt", "dueDate", "updatedAt", "completedAt"]).optional();
 export const orderSchema = z.enum(["asc", "desc"]).optional();
 export const statusSchema = z.enum(["active", "completed"]).optional();
+export const recurrencePatternSchema = z.enum(["NONE", "DAILY", "WEEKLY", "MONTHLY", "WEEKDAYS"]);
+export const recurrenceDaySchema = z.enum(["MO", "TU", "WE", "TH", "FR", "SA", "SU"]);
 
 const optionalDate = z
   .union([z.string().datetime(), z.null()])
@@ -31,6 +31,9 @@ export const createTaskSchema = z.object({
   isStarred: z.boolean().optional(),
   dueDate: optionalDate,
   reminderAt: optionalDate,
+  recurrencePattern: recurrencePatternSchema.optional(),
+  recurrenceInterval: z.number().int().min(1).max(365).optional(),
+  recurrenceDays: z.array(recurrenceDaySchema).optional(),
 });
 
 export const updateTaskSchema = z
@@ -43,6 +46,9 @@ export const updateTaskSchema = z
     dueDate: optionalDate,
     reminderAt: optionalDate,
     listId: objectIdSchema.optional(),
+    recurrencePattern: recurrencePatternSchema.optional(),
+    recurrenceInterval: z.number().int().min(1).max(365).optional(),
+    recurrenceDays: z.array(recurrenceDaySchema).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Ít nhất một trường cần được cập nhật.",

@@ -16,6 +16,8 @@ export type ApiError = {
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
 export type SmartFilter = "myday" | "important" | "planned" | "completed" | "all";
+export type RecurrencePattern = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY" | "WEEKDAYS";
+export type RecurrenceDay = "MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU";
 
 export type ListSummary = {
   id: string;
@@ -44,6 +46,10 @@ export type TaskDto = {
   dueDate: string | null;
   reminderAt: string | null;
   completedAt: string | null;
+  recurrencePattern: RecurrencePattern;
+  recurrenceInterval: number;
+  recurrenceDays: RecurrenceDay[];
+  recurringSourceId: string | null;
   listId: string;
   userId: string;
   createdAt: string;
