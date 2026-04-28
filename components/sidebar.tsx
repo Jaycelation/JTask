@@ -7,19 +7,25 @@ import { CalendarRange, CheckCheck, ListTodo, Star, SunMedium } from "lucide-rea
 import { ListManager } from "@/components/list-manager";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
-import type { ListSummary } from "@/lib/types";
+import type { DashboardSummaryDto, ListSummary } from "@/lib/types";
 
-const entries: Array<{ href: Route; label: string; icon: typeof SunMedium }> = [
-  { href: "/my-day", label: "My Day", icon: SunMedium },
-  { href: "/important", label: "Important", icon: Star },
-  { href: "/planned", label: "Planned", icon: CalendarRange },
-  { href: "/all", label: "All", icon: ListTodo },
-  { href: "/completed", label: "Completed", icon: CheckCheck },
+const entries: Array<{
+  href: Route;
+  label: string;
+  countKey: keyof DashboardSummaryDto["counts"];
+  icon: typeof SunMedium;
+}> = [
+  { href: "/my-day", label: "My Day", countKey: "myDay", icon: SunMedium },
+  { href: "/important", label: "Important", countKey: "important", icon: Star },
+  { href: "/planned", label: "Planned", countKey: "planned", icon: CalendarRange },
+  { href: "/all", label: "All", countKey: "all", icon: ListTodo },
+  { href: "/completed", label: "Completed", countKey: "completed", icon: CheckCheck },
 ];
 
 type SidebarProps = {
   pathname: string;
   lists: ListSummary[];
+  summary: DashboardSummaryDto | null;
   activeListId?: string | null;
   className?: string;
   onCreateList: (payload: { name: string; color?: string | null }) => Promise<void>;
@@ -48,6 +54,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
         {entries.map((entry) => {
           const Icon = entry.icon;
           const active = props.pathname === entry.href;
+          const count = props.summary?.counts[entry.countKey] ?? 0;
           return (
             <Link
               key={entry.href}
@@ -58,7 +65,15 @@ export function Sidebar({ className, ...props }: SidebarProps) {
               )}
             >
               <Icon className="h-4 w-4" />
-              {entry.label}
+              <span className="flex-1">{entry.label}</span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs",
+                  active ? "bg-white/20 text-primary-foreground" : "bg-background/70 text-muted-foreground",
+                )}
+              >
+                {count}
+              </span>
             </Link>
           );
         })}

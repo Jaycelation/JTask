@@ -66,3 +66,14 @@ export type SuggestionDto = {
   dueDate: string | null;
   listId: string;
 };
+
+export type DashboardSummaryDto = {
+  counts: {
+    myDay: number;
+    important: number;
+    planned: number;
+    all: number;
+    completed: number;
+  };
+  hasAnyTasks: boolean;
+};
