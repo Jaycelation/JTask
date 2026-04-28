@@ -1,9 +1,9 @@
 "use client";
 
-import { CalendarDays, ChevronRight, Star } from "lucide-react";
+import { Bell, CalendarDays, ChevronRight, Star } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatDateLabel } from "@/lib/date";
+import { formatDateLabel, formatReminderLabel } from "@/lib/date";
 import type { TaskDto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +39,12 @@ export function TaskItem({ task, selected, onToggleComplete, onToggleStar, onSel
             <span className="inline-flex items-center gap-1 rounded-full bg-background/70 px-2 py-1">
               <CalendarDays className="h-3 w-3" />
               {formatDateLabel(task.dueDate)}
+            </span>
+          ) : null}
+          {task.reminderAt ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-primary">
+              <Bell className="h-3 w-3" />
+              {formatReminderLabel(task.reminderAt)}
             </span>
           ) : null}
           {task._count?.subtasks ? <span>{task._count.subtasks} công việc con</span> : null}

@@ -18,7 +18,14 @@ import { TaskListView } from "@/components/task-list-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import type { ApiResponse, DashboardSummaryDto, ListSummary, SuggestionDto, TaskDto } from "@/lib/types";
+import type {
+  ApiResponse,
+  DashboardSummaryDto,
+  DemoSeedResult,
+  ListSummary,
+  SuggestionDto,
+  TaskDto,
+} from "@/lib/types";
 import type { FocusView } from "@/lib/view-config";
 import { getViewMeta, getViewQuery } from "@/lib/view-config";
 
@@ -59,6 +66,7 @@ export function AppShell({ view }: AppShellProps) {
   const [loading, setLoading] = React.useState(true);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [seedingDemo, setSeedingDemo] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
 
@@ -261,10 +269,10 @@ export function AppShell({ view }: AppShellProps) {
         method: "POST",
         body: JSON.stringify({ title }),
       });
-      toast.success("Đã thêm subtask.");
+      toast.success("Đã thêm công việc con.");
       await Promise.all([refreshTaskDetails(taskId), loadTasks()]);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Không thể tạo subtask.");
+      toast.error(error instanceof Error ? error.message : "Không thể tạo công việc con.");
     }
   }
 
@@ -278,19 +286,34 @@ export function AppShell({ view }: AppShellProps) {
         await Promise.all([refreshTaskDetails(selectedTask.id), loadTasks()]);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Không thể cập nhật subtask.");
+      toast.error(error instanceof Error ? error.message : "Không thể cập nhật công việc con.");
     }
   }
 
   async function deleteSubtask(subtaskId: string) {
     try {
       await apiFetch(`/api/subtasks/${subtaskId}`, { method: "DELETE" });
-      toast.success("Đã xóa subtask.");
+      toast.success("Đã xóa công việc con.");
       if (selectedTask) {
         await Promise.all([refreshTaskDetails(selectedTask.id), loadTasks()]);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Không thể xóa subtask.");
+      toast.error(error instanceof Error ? error.message : "Không thể xóa công việc con.");
+    }
+  }
+
+  async function seedDemoData() {
+    try {
+      setSeedingDemo(true);
+      const result = await apiFetch<DemoSeedResult>("/api/demo/seed", {
+        method: "POST",
+      });
+      toast.success(`Đã tạo ${result.createdTasks} task demo trong ${result.createdLists} danh sách.`);
+      await Promise.all([loadLists(), loadSummary(), loadTasks(), loadSuggestions()]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tạo dữ liệu demo.");
+    } finally {
+      setSeedingDemo(false);
     }
   }
 
@@ -409,9 +432,13 @@ export function AppShell({ view }: AppShellProps) {
               />
               <OnboardingCard
                 onStart={() => {
-                  const input = document.querySelector<HTMLInputElement>('input[placeholder="Thêm task nhanh và nhấn Enter"]');
+                  const input = document.querySelector<HTMLInputElement>('input[placeholder="Thêm task đầu tiên của bạn"]');
                   input?.focus();
                 }}
+                onSeedDemo={() => {
+                  void seedDemoData();
+                }}
+                seeding={seedingDemo}
               />
               <AddTaskInput
                 loading={submitting}

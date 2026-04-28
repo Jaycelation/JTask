@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarDays, Star, SunMedium, Trash2 } from "lucide-react";
+import { Bell, CalendarDays, Star, SunMedium, Trash2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DatePicker } from "@/components/date-picker";
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { formatReminderLabel, getReminderPresets } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { ListSummary, SubtaskDto, TaskDto } from "@/lib/types";
 
@@ -75,6 +76,7 @@ export function TaskDetailPanel({
   const [draftDescription, setDraftDescription] = React.useState("");
   const [subtaskTitle, setSubtaskTitle] = React.useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const reminderPresets = React.useMemo(() => getReminderPresets(), [task?.id]);
 
   React.useEffect(() => {
     setDraftTitle(task?.title ?? "");
@@ -167,11 +169,37 @@ export function TaskDetailPanel({
               onChange={(value) => void onUpdateTask(task.id, { dueDate: value })}
             />
 
-            <DatePicker
-              label="Nhắc nhở"
-              value={task.reminderAt}
-              onChange={(value) => void onUpdateTask(task.id, { reminderAt: value })}
-            />
+            <div className="space-y-3 rounded-2xl border bg-background/40 p-4">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" />
+                <div>
+                  <h3 className="font-semibold">Nhắc nhở</h3>
+                  <p className="text-sm text-muted-foreground">{formatReminderLabel(task.reminderAt)}</p>
+                </div>
+              </div>
+
+              <DatePicker
+                label="Ngày nhắc"
+                value={task.reminderAt}
+                onChange={(value) => void onUpdateTask(task.id, { reminderAt: value })}
+              />
+
+              <div className="flex flex-wrap gap-2">
+                {reminderPresets.map((preset) => (
+                  <Button
+                    key={preset.label}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void onUpdateTask(task.id, { reminderAt: preset.value })}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+                <Button variant="ghost" size="sm" onClick={() => void onUpdateTask(task.id, { reminderAt: null })}>
+                  Xóa nhắc nhở
+                </Button>
+              </div>
+            </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Danh sách</label>
@@ -191,7 +219,7 @@ export function TaskDetailPanel({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold">Subtasks</h3>
+                <h3 className="font-semibold">Công việc con</h3>
               </div>
               <div className="flex gap-2">
                 <Input
@@ -203,7 +231,7 @@ export function TaskDetailPanel({
                       setSubtaskTitle("");
                     }
                   }}
-                  placeholder="Thêm subtask"
+                  placeholder="Thêm công việc con"
                 />
                 <Button
                   variant="secondary"
@@ -239,7 +267,7 @@ export function TaskDetailPanel({
       <ConfirmDialog
         open={showDeleteConfirm}
         title="Xóa task"
-        description={`Task "${task.title}" sẽ bị xóa vĩnh viễn cùng các subtask của nó.`}
+        description={`Task "${task.title}" sẽ bị xóa vĩnh viễn cùng các công việc con của nó.`}
         confirmLabel="Xóa task"
         destructive
         onCancel={() => setShowDeleteConfirm(false)}

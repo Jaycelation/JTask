@@ -2,9 +2,11 @@ import { Sparkles, Target, WandSparkles } from "lucide-react";
 
 type OnboardingCardProps = {
   onStart: () => void;
+  onSeedDemo: () => void;
+  seeding?: boolean;
 };
 
-export function OnboardingCard({ onStart }: OnboardingCardProps) {
+export function OnboardingCard({ onStart, onSeedDemo, seeding }: OnboardingCardProps) {
   return (
     <div className="glass rounded-[2rem] p-6">
       <div className="mb-4 inline-flex rounded-full bg-primary/10 p-3 text-primary">
@@ -28,16 +30,26 @@ export function OnboardingCard({ onStart }: OnboardingCardProps) {
         <div className="rounded-2xl border bg-background/40 p-4">
           <Sparkles className="mb-3 h-5 w-5 text-primary" />
           <h4 className="font-medium">Smart Lists</h4>
-          <p className="mt-1 text-sm text-muted-foreground">Quan trọng, Planned và Completed luôn tự gom đúng ngữ cảnh.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Quan trọng, Đã lên kế hoạch và Đã hoàn thành luôn tự gom đúng ngữ cảnh.</p>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onStart}
-        className="mt-6 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-lg transition hover:opacity-95"
-      >
-        Tạo task đầu tiên
-      </button>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onStart}
+          className="rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-lg transition hover:opacity-95"
+        >
+          Tạo task đầu tiên
+        </button>
+        <button
+          type="button"
+          onClick={onSeedDemo}
+          disabled={seeding}
+          className="rounded-2xl border border-input bg-background/70 px-5 py-3 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {seeding ? "Đang tạo demo..." : "Tạo dữ liệu demo"}
+        </button>
+      </div>
     </div>
   );
 }
