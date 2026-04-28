@@ -93,6 +93,12 @@ export function TaskDetailPanel({
 
   return (
     <>
+      <button
+        type="button"
+        aria-label="Đóng task detail"
+        className="fixed inset-0 z-20 bg-slate-950/30 backdrop-blur-sm lg:hidden"
+        onClick={onClose}
+      />
       <aside className="glass fixed inset-x-4 bottom-4 top-24 z-30 overflow-auto rounded-[2rem] p-5 lg:static lg:inset-auto lg:block lg:h-[calc(100vh-2rem)] lg:w-[380px] xl:w-[400px]">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Chi tiết task</h2>

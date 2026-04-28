@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AddTaskInput } from "@/components/add-task-input";
 import { EmptyState } from "@/components/empty-state";
 import { MobileSidebar } from "@/components/mobile-sidebar";
+import { OnboardingCard } from "@/components/onboarding-card";
 import { Sidebar } from "@/components/sidebar";
 import { SmartListHeader } from "@/components/smart-list-header";
 import { SuggestionsPanel } from "@/components/suggestions-panel";
@@ -17,7 +18,7 @@ import { TaskListView } from "@/components/task-list-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import type { ApiResponse, ListSummary, SuggestionDto, TaskDto } from "@/lib/types";
+import type { ApiResponse, DashboardSummaryDto, ListSummary, SuggestionDto, TaskDto } from "@/lib/types";
 import type { FocusView } from "@/lib/view-config";
 import { getViewMeta, getViewQuery } from "@/lib/view-config";
 
@@ -51,6 +52,7 @@ export function AppShell({ view }: AppShellProps) {
   const [isRouting, startTransition] = React.useTransition();
 
   const [lists, setLists] = React.useState<ListSummary[]>([]);
+  const [summary, setSummary] = React.useState<DashboardSummaryDto | null>(null);
   const [tasks, setTasks] = React.useState<TaskDto[]>([]);
   const [selectedTask, setSelectedTask] = React.useState<TaskDto | null>(null);
   const [suggestions, setSuggestions] = React.useState<SuggestionDto[]>([]);
@@ -63,6 +65,11 @@ export function AppShell({ view }: AppShellProps) {
   const loadLists = React.useCallback(async () => {
     const data = await apiFetch<ListSummary[]>("/api/lists");
     setLists(data);
+  }, []);
+
+  const loadSummary = React.useCallback(async () => {
+    const data = await apiFetch<DashboardSummaryDto>("/api/summary");
+    setSummary(data);
   }, []);
 
   const loadTasks = React.useCallback(async () => {
@@ -105,7 +112,7 @@ export function AppShell({ view }: AppShellProps) {
     async function bootstrap() {
       try {
         setLoading(true);
-        await Promise.all([loadLists(), loadTasks(), loadSuggestions()]);
+        await Promise.all([loadLists(), loadSummary(), loadTasks(), loadSuggestions()]);
       } catch (error) {
         if (active) {
           toast.error(error instanceof Error ? error.message : "Không thể tải dữ liệu.");
@@ -122,7 +129,7 @@ export function AppShell({ view }: AppShellProps) {
     return () => {
       active = false;
     };
-  }, [loadLists, loadTasks, loadSuggestions]);
+  }, [loadLists, loadSummary, loadTasks, loadSuggestions]);
 
   const activeListId = view.type === "list" ? view.listId : null;
   const activeList = activeListId ? lists.find((list) => list.id === activeListId) : null;
@@ -164,7 +171,7 @@ export function AppShell({ view }: AppShellProps) {
       });
 
       toast.success("Đã tạo task.");
-      await Promise.all([loadLists(), loadTasks(), loadSuggestions()]);
+      await Promise.all([loadLists(), loadSummary(), loadTasks(), loadSuggestions()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể tạo task.");
     } finally {
@@ -188,7 +195,7 @@ export function AppShell({ view }: AppShellProps) {
       });
       setTasks((current) => current.map((task) => (task.id === taskId ? updated : task)));
       setSelectedTask((current) => (current?.id === taskId ? updated : current));
-      await Promise.all([loadLists(), loadTasks(), loadSuggestions()]);
+      await Promise.all([loadLists(), loadSummary(), loadTasks(), loadSuggestions()]);
     } catch (error) {
       setTasks(previousTasks);
       setSelectedTask(previousSelected);
@@ -201,7 +208,7 @@ export function AppShell({ view }: AppShellProps) {
       await apiFetch<null>(`/api/tasks/${taskId}`, { method: "DELETE" });
       setSelectedTask((current) => (current?.id === taskId ? null : current));
       toast.success("Đã xóa task.");
-      await Promise.all([loadLists(), loadTasks(), loadSuggestions()]);
+      await Promise.all([loadLists(), loadSummary(), loadTasks(), loadSuggestions()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể xóa task.");
     }
@@ -214,7 +221,7 @@ export function AppShell({ view }: AppShellProps) {
         body: JSON.stringify(payload),
       });
       toast.success("Đã tạo danh sách.");
-      await loadLists();
+      await Promise.all([loadLists(), loadSummary()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể tạo danh sách.");
     }
@@ -227,7 +234,7 @@ export function AppShell({ view }: AppShellProps) {
         body: JSON.stringify(payload),
       });
       toast.success("Đã cập nhật danh sách.");
-      await loadLists();
+      await Promise.all([loadLists(), loadSummary()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể cập nhật danh sách.");
     }
@@ -242,7 +249,7 @@ export function AppShell({ view }: AppShellProps) {
           router.push("/all");
         });
       }
-      await Promise.all([loadLists(), loadTasks()]);
+      await Promise.all([loadLists(), loadSummary(), loadTasks()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể xóa danh sách.");
     }
@@ -297,6 +304,8 @@ export function AppShell({ view }: AppShellProps) {
   const emptyDescription = deferredSearch.trim()
     ? `Không có kết quả cho "${deferredSearch.trim()}". Hãy thử từ khóa khác.`
     : meta.emptyDescription;
+
+  const showOnboarding = !loading && !summary?.hasAnyTasks && !deferredSearch.trim();
 
   const content = (
     <>
@@ -369,6 +378,7 @@ export function AppShell({ view }: AppShellProps) {
         <Sidebar
           pathname={pathname}
           lists={lists}
+          summary={summary}
           activeListId={activeListId}
           className="hidden lg:flex"
           onCreateList={createList}
@@ -382,13 +392,36 @@ export function AppShell({ view }: AppShellProps) {
             title={headerTitle}
             pathname={pathname}
             lists={lists}
+            summary={summary}
             activeListId={activeListId}
             onCreateList={createList}
             onUpdateList={updateList}
             onDeleteList={deleteList}
             onSelectList={navigateToList}
           />
-          {content}
+          {showOnboarding ? (
+            <>
+              <SmartListHeader
+                title={headerTitle}
+                subtitle={meta.subtitle}
+                viewKey={view.type === "list" ? "list" : meta.viewKey}
+                count={tasks.length}
+              />
+              <OnboardingCard
+                onStart={() => {
+                  const input = document.querySelector<HTMLInputElement>('input[placeholder="Thêm task nhanh và nhấn Enter"]');
+                  input?.focus();
+                }}
+              />
+              <AddTaskInput
+                loading={submitting}
+                placeholder="Thêm task đầu tiên của bạn"
+                onSubmit={handleCreateTask}
+              />
+            </>
+          ) : (
+            content
+          )}
         </div>
 
         <TaskDetailPanel
