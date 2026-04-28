@@ -83,3 +83,11 @@ export type DemoSeedResult = {
   createdTasks: number;
   createdSubtasks: number;
 };
+
+export type SessionUserDto = {
+  id: string;
+  email: string;
+  name: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};

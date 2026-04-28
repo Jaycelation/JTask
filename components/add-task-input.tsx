@@ -10,12 +10,14 @@ import { Spinner } from "@/components/ui/spinner";
 type AddTaskInputProps = {
   placeholder?: string;
   loading?: boolean;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
   onSubmit: (title: string) => Promise<void>;
 };
 
 export function AddTaskInput({
   placeholder = "Thêm task mới",
   loading,
+  inputRef,
   onSubmit,
 }: AddTaskInputProps) {
   const [title, setTitle] = React.useState("");
@@ -36,6 +38,7 @@ export function AddTaskInput({
         <Plus className="h-4 w-4" />
       </div>
       <Input
+        ref={inputRef}
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         onKeyDown={(event) => {

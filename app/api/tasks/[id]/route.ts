@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
 import { apiError, apiSuccess } from "@/lib/api";
-import { getCurrentUserId } from "@/lib/mock-user";
+import { requireCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { serializeTask } from "@/lib/serializers";
 import { updateTaskSchema } from "@/lib/validations";
@@ -13,11 +13,11 @@ type Params = {
 
 export async function GET(_: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { id } = await params;
 
     const task = await prisma.task.findFirst({
-      where: { id, userId },
+      where: { id, userId: user.id },
       include: {
         list: {
           select: { id: true, name: true, color: true },
@@ -33,16 +33,19 @@ export async function GET(_: NextRequest, { params }: Params) {
     }
 
     return apiSuccess(serializeTask(task));
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     return apiError(500, "TASK_FETCH_FAILED", "Không thể tải chi tiết task.");
   }
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { id } = await params;
-    const existing = await prisma.task.findFirst({ where: { id, userId } });
+    const existing = await prisma.task.findFirst({ where: { id, userId: user.id } });
 
     if (!existing) {
       return apiError(404, "TASK_NOT_FOUND", "Không tìm thấy task.");
@@ -86,6 +89,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     return apiSuccess(serializeTask(task), { message: "Cập nhật task thành công." });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     if (error instanceof ZodError) {
       return apiError(400, "VALIDATION_ERROR", error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
     }
@@ -96,9 +102,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { id } = await params;
-    const existing = await prisma.task.findFirst({ where: { id, userId } });
+    const existing = await prisma.task.findFirst({ where: { id, userId: user.id } });
 
     if (!existing) {
       return apiError(404, "TASK_NOT_FOUND", "Không tìm thấy task.");
@@ -107,7 +113,10 @@ export async function DELETE(_: NextRequest, { params }: Params) {
     await prisma.subtask.deleteMany({ where: { taskId: id } });
     await prisma.task.delete({ where: { id } });
     return apiSuccess(null, { message: "Task deleted successfully" });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     return apiError(500, "TASK_DELETE_FAILED", "Không thể xóa task.");
   }
 }

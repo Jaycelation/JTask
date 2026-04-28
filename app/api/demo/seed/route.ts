@@ -1,17 +1,17 @@
 import { addDays, setHours, setMinutes, subDays } from "date-fns";
 
 import { apiError, apiSuccess } from "@/lib/api";
+import { requireCurrentUser } from "@/lib/auth";
 import { DEFAULT_LIST_NAME } from "@/lib/constants";
-import { getCurrentUserId } from "@/lib/mock-user";
 import { prisma } from "@/lib/prisma";
 import { ensureUserWithDefaultList } from "@/lib/task-service";
 
 export async function POST() {
   try {
-    const userId = getCurrentUserId();
-    const defaultList = await ensureUserWithDefaultList(userId);
+    const user = await requireCurrentUser();
+    const defaultList = await ensureUserWithDefaultList(user.id);
 
-    const existingTasks = await prisma.task.count({ where: { userId } });
+    const existingTasks = await prisma.task.count({ where: { userId: user.id } });
     if (existingTasks > 0) {
       return apiError(400, "DEMO_ALREADY_EXISTS", "Workspace hiện đã có task. Hãy dùng demo trên database trống.");
     }
@@ -29,7 +29,7 @@ export async function POST() {
         data: {
           name: listSeed.name,
           color: listSeed.color,
-          userId,
+          userId: user.id,
         },
       });
       createdLists.push(list);
@@ -116,7 +116,7 @@ export async function POST() {
           dueDate: taskSeed.dueDate ?? null,
           reminderAt: taskSeed.reminderAt ?? null,
           listId: taskSeed.listId,
-          userId,
+          userId: user.id,
         },
       });
       createdTasks += 1;
@@ -140,7 +140,10 @@ export async function POST() {
       },
       { status: 201, message: "Đã tạo dữ liệu demo." },
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     return apiError(500, "DEMO_SEED_FAILED", "Không thể tạo dữ liệu demo.");
   }
 }

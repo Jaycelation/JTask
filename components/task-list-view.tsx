@@ -13,6 +13,9 @@ type TaskListViewProps = {
   selectedTaskId?: string | null;
   groupByPlanned?: boolean;
   completedOnly?: boolean;
+  selectionMode?: boolean;
+  selectedTaskIds?: string[];
+  onToggleMultiSelect?: (task: TaskDto) => void;
   onToggleComplete: (task: TaskDto) => void;
   onToggleStar: (task: TaskDto) => void;
   onSelect: (task: TaskDto) => void;
@@ -21,6 +24,9 @@ type TaskListViewProps = {
 function TaskCollection({
   tasks,
   selectedTaskId,
+  selectionMode,
+  selectedTaskIds,
+  onToggleMultiSelect,
   onToggleComplete,
   onToggleStar,
   onSelect,
@@ -32,6 +38,9 @@ function TaskCollection({
           key={task.id}
           task={task}
           selected={selectedTaskId === task.id}
+          selectionMode={selectionMode}
+          multiSelected={selectedTaskIds?.includes(task.id)}
+          onToggleMultiSelect={onToggleMultiSelect}
           onToggleComplete={onToggleComplete}
           onToggleStar={onToggleStar}
           onSelect={onSelect}
@@ -46,6 +55,9 @@ export function TaskListView({
   selectedTaskId,
   groupByPlanned,
   completedOnly,
+  selectionMode,
+  selectedTaskIds,
+  onToggleMultiSelect,
   onToggleComplete,
   onToggleStar,
   onSelect,
@@ -59,6 +71,9 @@ export function TaskListView({
       <TaskCollection
         tasks={tasks}
         selectedTaskId={selectedTaskId}
+        selectionMode={selectionMode}
+        selectedTaskIds={selectedTaskIds}
+        onToggleMultiSelect={onToggleMultiSelect}
         onToggleComplete={onToggleComplete}
         onToggleStar={onToggleStar}
         onSelect={onSelect}
@@ -72,6 +87,9 @@ export function TaskListView({
         <TaskCollection
           tasks={activeTasks}
           selectedTaskId={selectedTaskId}
+          selectionMode={selectionMode}
+          selectedTaskIds={selectedTaskIds}
+          onToggleMultiSelect={onToggleMultiSelect}
           onToggleComplete={onToggleComplete}
           onToggleStar={onToggleStar}
           onSelect={onSelect}
@@ -91,6 +109,9 @@ export function TaskListView({
               <TaskCollection
                 tasks={completedTasks}
                 selectedTaskId={selectedTaskId}
+                selectionMode={selectionMode}
+                selectedTaskIds={selectedTaskIds}
+                onToggleMultiSelect={onToggleMultiSelect}
                 onToggleComplete={onToggleComplete}
                 onToggleStar={onToggleStar}
                 onSelect={onSelect}
@@ -120,6 +141,9 @@ export function TaskListView({
             <TaskCollection
               tasks={groups[group]}
               selectedTaskId={selectedTaskId}
+              selectionMode={selectionMode}
+              selectedTaskIds={selectedTaskIds}
+              onToggleMultiSelect={onToggleMultiSelect}
               onToggleComplete={onToggleComplete}
               onToggleStar={onToggleStar}
               onSelect={onSelect}
@@ -142,6 +166,9 @@ export function TaskListView({
             <TaskCollection
               tasks={completedTasks}
               selectedTaskId={selectedTaskId}
+              selectionMode={selectionMode}
+              selectedTaskIds={selectedTaskIds}
+              onToggleMultiSelect={onToggleMultiSelect}
               onToggleComplete={onToggleComplete}
               onToggleStar={onToggleStar}
               onSelect={onSelect}

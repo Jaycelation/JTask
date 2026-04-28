@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 
 import { DEFAULT_LIST_NAME } from "@/lib/constants";
 import { apiError, apiSuccess } from "@/lib/api";
-import { getCurrentUserId } from "@/lib/mock-user";
+import { requireCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { serializeList } from "@/lib/serializers";
 import { ensureUserWithDefaultList } from "@/lib/task-service";
@@ -15,9 +15,9 @@ type Params = {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { id } = await params;
-    const existing = await prisma.taskList.findFirst({ where: { id, userId } });
+    const existing = await prisma.taskList.findFirst({ where: { id, userId: user.id } });
 
     if (!existing) {
       return apiError(404, "LIST_NOT_FOUND", "Không tìm thấy danh sách.");
@@ -41,6 +41,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     return apiSuccess(serializeList(list), { message: "Cập nhật danh sách thành công." });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     if (error instanceof ZodError) {
       return apiError(400, "VALIDATION_ERROR", error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
     }
@@ -51,9 +54,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { id } = await params;
-    const list = await prisma.taskList.findFirst({ where: { id, userId } });
+    const list = await prisma.taskList.findFirst({ where: { id, userId: user.id } });
 
     if (!list) {
       return apiError(404, "LIST_NOT_FOUND", "Không tìm thấy danh sách.");
@@ -67,7 +70,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     if (mode === "delete-tasks") {
       const tasks = await prisma.task.findMany({
-        where: { userId, listId: id },
+        where: { userId: user.id, listId: id },
         select: { id: true },
       });
 
@@ -77,21 +80,24 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         });
       }
 
-      await prisma.task.deleteMany({ where: { userId, listId: id } });
+      await prisma.task.deleteMany({ where: { userId: user.id, listId: id } });
       await prisma.taskList.delete({ where: { id } });
       return apiSuccess(null, { message: "List deleted successfully" });
     }
 
-    const defaultList = await ensureUserWithDefaultList(userId);
+    const defaultList = await ensureUserWithDefaultList(user.id);
 
     await prisma.task.updateMany({
-      where: { userId, listId: id },
+      where: { userId: user.id, listId: id },
       data: { listId: defaultList.id },
     });
     await prisma.taskList.delete({ where: { id } });
 
     return apiSuccess(null, { message: "List deleted successfully" });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     if (error instanceof ZodError) {
       return apiError(400, "VALIDATION_ERROR", error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
     }

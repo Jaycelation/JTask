@@ -1,44 +1,44 @@
 import { apiError, apiSuccess } from "@/lib/api";
+import { requireCurrentUser } from "@/lib/auth";
 import { getTodayBounds } from "@/lib/date";
-import { getCurrentUserId } from "@/lib/mock-user";
 import { prisma } from "@/lib/prisma";
 import { ensureUserWithDefaultList } from "@/lib/task-service";
 
 export async function GET() {
   try {
-    const userId = getCurrentUserId();
-    await ensureUserWithDefaultList(userId);
+    const user = await requireCurrentUser();
+    await ensureUserWithDefaultList(user.id);
     const { start, end } = getTodayBounds();
 
     const [myDay, important, planned, all, completed] = await Promise.all([
       prisma.task.count({
         where: {
-          userId,
+          userId: user.id,
           OR: [{ isMyDay: true }, { dueDate: { gte: start, lte: end } }],
         },
       }),
       prisma.task.count({
         where: {
-          userId,
+          userId: user.id,
           isStarred: true,
           isCompleted: false,
         },
       }),
       prisma.task.count({
         where: {
-          userId,
+          userId: user.id,
           dueDate: { not: null },
           isCompleted: false,
         },
       }),
       prisma.task.count({
         where: {
-          userId,
+          userId: user.id,
         },
       }),
       prisma.task.count({
         where: {
-          userId,
+          userId: user.id,
           isCompleted: true,
         },
       }),
@@ -54,7 +54,10 @@ export async function GET() {
       },
       hasAnyTasks: all > 0,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     return apiError(500, "SUMMARY_FETCH_FAILED", "Không thể tải tổng quan.");
   }
 }

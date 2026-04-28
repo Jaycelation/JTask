@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
 import { apiError, apiSuccess } from "@/lib/api";
-import { getCurrentUserId } from "@/lib/mock-user";
+import { requireCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { serializeSubtask } from "@/lib/serializers";
 import { createSubtaskSchema } from "@/lib/validations";
@@ -13,9 +13,9 @@ type Params = {
 
 export async function GET(_: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { taskId } = await params;
-    const task = await prisma.task.findFirst({ where: { id: taskId, userId } });
+    const task = await prisma.task.findFirst({ where: { id: taskId, userId: user.id } });
 
     if (!task) {
       return apiError(404, "TASK_NOT_FOUND", "Không tìm thấy task.");
@@ -27,16 +27,19 @@ export async function GET(_: NextRequest, { params }: Params) {
     });
 
     return apiSuccess(subtasks.map(serializeSubtask));
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     return apiError(500, "SUBTASKS_FETCH_FAILED", "Không thể tải subtask.");
   }
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { taskId } = await params;
-    const task = await prisma.task.findFirst({ where: { id: taskId, userId } });
+    const task = await prisma.task.findFirst({ where: { id: taskId, userId: user.id } });
 
     if (!task) {
       return apiError(404, "TASK_NOT_FOUND", "Không tìm thấy task.");
@@ -57,6 +60,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       message: "Tạo subtask thành công.",
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     if (error instanceof ZodError) {
       return apiError(400, "VALIDATION_ERROR", error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
     }

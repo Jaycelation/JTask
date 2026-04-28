@@ -1,4 +1,3 @@
-export const MOCK_USER_ID = "507f1f77bcf86cd799439011";
 export const DEFAULT_LIST_NAME = "Tasks";
 
 export const SMART_LISTS = [

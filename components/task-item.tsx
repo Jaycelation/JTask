@@ -10,23 +10,47 @@ import { cn } from "@/lib/utils";
 type TaskItemProps = {
   task: TaskDto;
   selected?: boolean;
+  selectionMode?: boolean;
+  multiSelected?: boolean;
+  onToggleMultiSelect?: (task: TaskDto) => void;
   onToggleComplete: (task: TaskDto) => void;
   onToggleStar: (task: TaskDto) => void;
   onSelect: (task: TaskDto) => void;
 };
 
-export function TaskItem({ task, selected, onToggleComplete, onToggleStar, onSelect }: TaskItemProps) {
+export function TaskItem({
+  task,
+  selected,
+  selectionMode,
+  multiSelected,
+  onToggleMultiSelect,
+  onToggleComplete,
+  onToggleStar,
+  onSelect,
+}: TaskItemProps) {
   return (
     <div
       className={cn(
         "group glass flex cursor-pointer items-center gap-3 rounded-2xl p-4 transition-all hover:-translate-y-0.5",
-        selected && "ring-2 ring-primary/40",
+        (selected || multiSelected) && "ring-2 ring-primary/40",
       )}
-      onClick={() => onSelect(task)}
+      onClick={() => {
+        if (selectionMode) {
+          onToggleMultiSelect?.(task);
+          return;
+        }
+        onSelect(task);
+      }}
     >
       <Checkbox
-        checked={task.isCompleted}
-        onCheckedChange={() => onToggleComplete(task)}
+        checked={selectionMode ? Boolean(multiSelected) : task.isCompleted}
+        onCheckedChange={() => {
+          if (selectionMode) {
+            onToggleMultiSelect?.(task);
+            return;
+          }
+          onToggleComplete(task);
+        }}
         className="shrink-0"
       />
       <div className="min-w-0 flex-1">
@@ -55,9 +79,11 @@ export function TaskItem({ task, selected, onToggleComplete, onToggleStar, onSel
         className={cn(
           "rounded-full p-2 transition-colors hover:bg-accent",
           task.isStarred ? "text-amber-400" : "text-muted-foreground",
+          selectionMode && "pointer-events-none opacity-60",
         )}
         onClick={(event) => {
           event.stopPropagation();
+          if (selectionMode) return;
           onToggleStar(task);
         }}
         aria-label="Đánh dấu quan trọng"

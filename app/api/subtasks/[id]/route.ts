@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
 import { apiError, apiSuccess } from "@/lib/api";
-import { getCurrentUserId } from "@/lib/mock-user";
+import { requireCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { serializeSubtask } from "@/lib/serializers";
 import { updateSubtaskSchema } from "@/lib/validations";
@@ -13,10 +13,10 @@ type Params = {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { id } = await params;
     const existing = await prisma.subtask.findFirst({
-      where: { id, task: { userId } },
+      where: { id, task: { userId: user.id } },
     });
 
     if (!existing) {
@@ -36,6 +36,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     return apiSuccess(serializeSubtask(subtask), { message: "Cập nhật subtask thành công." });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     if (error instanceof ZodError) {
       return apiError(400, "VALIDATION_ERROR", error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
     }
@@ -46,10 +49,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_: NextRequest, { params }: Params) {
   try {
-    const userId = getCurrentUserId();
+    const user = await requireCurrentUser();
     const { id } = await params;
     const existing = await prisma.subtask.findFirst({
-      where: { id, task: { userId } },
+      where: { id, task: { userId: user.id } },
     });
 
     if (!existing) {
@@ -58,7 +61,10 @@ export async function DELETE(_: NextRequest, { params }: Params) {
 
     await prisma.subtask.delete({ where: { id } });
     return apiSuccess(null, { message: "Subtask deleted successfully" });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return apiError(401, "UNAUTHORIZED", "Bạn chưa đăng nhập.");
+    }
     return apiError(500, "SUBTASK_DELETE_FAILED", "Không thể xóa subtask.");
   }
 }
