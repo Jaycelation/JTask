@@ -6,6 +6,8 @@ import {
   isPast,
   isToday,
   isTomorrow,
+  setHours,
+  setMinutes,
   startOfDay,
 } from "date-fns";
 import { vi } from "date-fns/locale";
